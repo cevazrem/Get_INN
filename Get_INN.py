@@ -1,9 +1,15 @@
 '''
+
 Created on 6 июл. 2020 г.
 
+ 
+
 @author: hz
+
 '''
+
 #Подключаем библиотеки
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -18,7 +24,6 @@ from time import sleep
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import NoSuchElementException
 from os import rename
-
 import linecache
 
 def last_line_pos(path):
@@ -31,14 +36,15 @@ def last_line_pos(path):
             return pos
         pos += 1
     return -1
-    
+
+   
+
 def add_val(path, num_line, value):
     #print('add_val' + str(num_line))
     pos = 0
     with open(path, 'r+', encoding='utf-8') as file:
         lines = file.readlines()
         lines[num_line] = lines[num_line].replace('\n', '') + ';' + str(value) + '\n'
-
         file.seek(0)
         text = ''.join(lines)
         file.write(text)
@@ -46,29 +52,30 @@ def add_val(path, num_line, value):
         file.close()
     return lines
 
-def main_fun():
+ 
 
+def main_fun():
     allowed_characters=['а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я',
                         'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я','\'', ' ', ',', '.', 'I', 'V', '(', ')', '-']
-    
+
     #Задаем константы
     profile = 'C:\\Users\\AUsovich\\Documents\\Papka\\pyscript\\risk2\\User Data'
     engine = r'C:\\Users\\AUsovich\\Documents\\Papka\\pyscript\\risk2\\chromedriver.exe'
     income_file = 'C:\\Users\\AUsovich\\Documents\\Papka\\pyscript\\risk2\\customers.csv'
     #outcome_file = 'C:\\Users\\AUsovich\\Desktop\\pyscript\\risk2\\results.csv'
     inn_url_addr = 'https://service.nalog.ru/static/personal-data.html?svc=inn&from=%2Finn.do'
-    
+
     cur_pos = 0
     start_pos = 0
-    
-    
-    WINDOW_SIZE = "1920,1080"    
+    WINDOW_SIZE = "1920,1080"  
+ 
     options = webdriver.ChromeOptions()
     options.add_argument('user-data-dir='+ profile)
     #options.add_argument("--headless")
     options.add_argument("--window-size=%s" % WINDOW_SIZE)
     #driver = webdriver.Chrome(executable_path=engine,chrome_options=options)
     #driver.get(inn_url_addr)
+
     #Читаем входной файл
     driver = webdriver.Chrome(executable_path=engine,chrome_options=options)
     #driver = webdriver.Chrome(chrome_options=options, executable_path=engine)
@@ -101,6 +108,28 @@ def main_fun():
                 driver.get(inn_url_addr)
                 current = lines[cur_pos]
                 data_list = current.strip('\n').split(';')
+
+                #Проверим формат даты рождения
+                if len(data_list[3]) != 8:
+                    inn_val = '<Неверный формат даты рождения>'
+                    add_val(income_file, cur_pos, inn_val)
+                    print('Неверный формат даты рождения')
+                    break
+
+                #Проверим формат серии номера паспорта
+		if len(data_list[4]) != 10:
+                    inn_val = '<Неверный формат серии номера документа>'
+                    add_val(income_file, cur_pos, inn_val)
+                    print('Неверный формат серии номера документа')
+                    break
+
+                #Проверим формат даты выдачи паспорта
+                if len(data_list[5]) != 8:
+                    inn_val = '<Неверный формат даты выдачи документа>'
+                    add_val(income_file, cur_pos, inn_val)
+                    print('Неверный формат даты выдачи документа')
+                    break
+
                 if len(data_list) == 7:
                     check = driver.find_element_by_xpath("//a[@class='checkbox checkbox-off']") #driver.find_element_by_xpath("//input[@type='checkbox' and @id='personalData']")
                     if check != None:
@@ -108,8 +137,8 @@ def main_fun():
                         #sleep(1)
                         cont_btn = driver.find_element_by_xpath("//button[@type='submit' and @id='btnContinue']")
                         if cont_btn != None:
-                            cont_btn.send_keys(Keys.ENTER)#cont_btn.click()
-                                    
+                            cont_btn.send_keys(Keys.ENTER)#cont_btn.click() 
+
                             #Введем фамилию
                             fem = driver.find_element_by_xpath("//input[@id = 'fam' and @class='txt-wide txt-ru-name-ex uni-hint-linked']")
                             for i in data_list[0]:
@@ -124,7 +153,7 @@ def main_fun():
                             #Введем отчество
                             otch = driver.find_element_by_xpath("//input[@id = 'otch' and @class='txt-wide txt-ru-name-ex uni-hint-linked']")
                             #=====================
-                            if not data_list[2]:
+                            if (not data_list[2]) or (data_list[2] == "-"):
                                 check_otch = driver.find_element_by_xpath("//a[@class='checkbox checkbox-off' and @id='unichk_0']")
                                 check_otch.send_keys(Keys.ENTER)
                             else:
@@ -132,6 +161,7 @@ def main_fun():
                                     #sleep(0.1)
                                     otch.send_keys(i)
                             #=====================
+
                             #Введем дату рождения
                             bdate = driver.find_element_by_xpath("//input[@id = 'bdate' and @class='txt-date uni-hint-linked']")
                             for i in data_list[3]:
@@ -150,7 +180,7 @@ def main_fun():
                             #Отправить запрос
                                 submit_btn = None
                             submit_btn = driver.find_element_by_xpath("//button[@type='submit' and @id='btn_send']")
-                            if submit_btn != None: 
+                            if submit_btn != None:
                                 submit_btn.send_keys(Keys.ENTER)
                             #sleep(1)
                             itnum = 0
@@ -181,7 +211,7 @@ def main_fun():
                                 itnum = itnum + 1
                                 if itnum > 3:
                                     raise NoSuchElementException
-                            #Читаем ИНН 
+                            #Читаем ИНН
                             inn = driver.find_element_by_xpath("//p[@class='result-inn']")
                             if inn != None and inn.text != '':
                                 inn_val = driver.find_element_by_xpath("//strong[@id='resultInn']").text
@@ -190,7 +220,7 @@ def main_fun():
                                 print('Давай по новой Миша!')
                                 #Try 1 more time
                                 driver.get(inn_url_addr)
-                                #===============    
+                                #===============   
                                 data_list = current.strip('\n').split(';')
                                 if len(data_list) == 7:
                                     check = driver.find_element_by_xpath("//a[@class='checkbox checkbox-off']") #driver.find_element_by_xpath("//input[@type='checkbox' and @id='personalData']")
@@ -200,7 +230,6 @@ def main_fun():
                                         cont_btn = driver.find_element_by_xpath("//button[@type='submit' and @id='btnContinue']")
                                         if cont_btn != None:
                                             cont_btn.send_keys(Keys.ENTER)#cont_btn.click()
-                                    
                                             #Введем фамилию
                                             fem = driver.find_element_by_xpath("//input[@id = 'fam' and @class='txt-wide txt-ru-name-ex uni-hint-linked']")
                                             for i in data_list[0]:
@@ -241,7 +270,7 @@ def main_fun():
                                             #Отправить запрос
                                             submit_btn = None
                                             submit_btn = driver.find_element_by_xpath("//button[@type='submit' and @id='btn_send']")
-                                            if submit_btn != None: 
+                                            if submit_btn != None:
                                                 submit_btn.send_keys(Keys.ENTER)
                                             sleep(1)
                                             itnum = 0
@@ -271,7 +300,7 @@ def main_fun():
                                                 print('Waiting for a response('+str(itnum)+')...')
                                                 if itnum > 3:
                                                     raise NoSuchElementException
-                                            #Читаем ИНН 
+                                            #Читаем ИНН
                                             inn = driver.find_element_by_xpath("//p[@class='result-inn']")
                                             if inn != None and inn.text != '':
                                                 inn_val = driver.find_element_by_xpath("//strong[@id='resultInn']").text
@@ -284,16 +313,15 @@ def main_fun():
     except NoSuchElementException:
         driver.close()
         driver.quit()
-        return 'WRONG_SYMBOLS'
-    return 'FINISHED_SUCCESFULLY'            
+        return ('WRONG_SYMBOLS' + str(cur_pos))
+    return 'FINISHED_SUCCESFULLY'           
+ 
 
-    
-    
 if __name__ == '__main__':
     warnings.filterwarnings("ignore");
-    
+   
     income_file = 'C:\\Users\\AUsovich\\Documents\\Papka\\pyscript\\risk2\\customers.csv'
-    #==========add sort===========   
+    #==========add sort===========  
     with open(income_file, "r+", encoding='utf-8') as file:
         lines = file.readlines()
         it = 0
@@ -315,5 +343,3 @@ if __name__ == '__main__':
         print(state)
         sleep(5)
     print('Finished 1 iter' + str(datetime.datetime.now()))
-    
-    
