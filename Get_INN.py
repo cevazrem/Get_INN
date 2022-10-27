@@ -1,13 +1,3 @@
-'''
-
-Created on 6 июл. 2020 г.
-
- 
-
-@author: hz
-
-'''
-
 #Подключаем библиотеки
 
 from selenium import webdriver
